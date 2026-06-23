@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<title>我的日記</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --border: #e8e6e0;
+    --text: #1a1a18;
+    --text-muted: #7a7870;
+    --accent: #2d6a4f;
+    --accent-light: #e8f5ee;
+    --tag-bg: #f0ede6;
+    --tag-text: #5a5650;
+    --danger: #c0392b;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  header h1 {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 500;
+  }
+
+  .panel { display: none; padding: 1.25rem; }
+  .panel.active { display: block; }
+
+  /* Write panel */
+  .date-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .date-display {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+  }
+
+  textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.7;
+    color: var(--text);
+    background: var(--surface);
+    resize: none;
+    min-height: 200px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+
+  .tag-input-wrap {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.5rem 0.875rem;
+    flex-wrap: wrap;
+    transition: border-color 0.15s;
+  }
+
+  .tag-input-wrap:focus-within { border-color: var(--accent); }
+
+  .tag-pill {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 13px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+
+  .tag-pill button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 0;
+    opacity: 0.7;
+  }
+
+  .tag-input-wrap input {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: transparent;
+    min-width: 80px;
+    flex: 1;
+  }
+
+  .tag-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+  }
+
+  .btn-save {
+    width: 100%;
+    margin-top: 1.25rem;
+    padding: 0.875rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-save:active { opacity: 0.85; }
+  .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .status {
+    text-align: center;
+    font-size: 14px;
+    margin-top: 0.75rem;
+    min-height: 20px;
+    color: var(--text-muted);
+  }
+
+  .status.success { color: var(--accent); }
+  .status.error { color: var(--danger); }
+
+  /* Search panel */
+  .search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .search-bar input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .search-bar input:focus { border-color: var(--accent); }
+
+  .btn-search {
+    padding: 0.75rem 1.25rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-search:active { opacity: 0.85; }
+
+  .entry-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.125rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .entry-date {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+  }
+
+  .entry-body {
+    font-size: 15px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .entry-tags {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .entry-tag {
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 20px;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 15px;
+    padding: 3rem 0;
+  }
+
+  /* Settings panel */
+  .settings-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+
+  .settings-row {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .settings-row:last-child { border-bottom: none; }
+
+  .settings-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .settings-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .settings-row input[type="text"],
+  .settings-row input[type="password"] {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .settings-row input:focus { border-color: var(--accent); }
+
+  .settings-row.full { flex-direction: column; align-items: stretch; }
+
+  .btn-save-settings {
+    width: 100%;
+    padding: 0.875rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    margin-top: 0.25rem;
+  }
+
+  .btn-save-settings:active { opacity: 0.85; }
+
+  .settings-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .loading {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem;
+    font-size: 15px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📓 我的日記</h1>
+  <span id="header-date" style="font-size:13px;color:var(--text-muted);"></span>
+</header>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('write')">寫日記</button>
+  <button class="tab" onclick="switchTab('read')">閱讀</button>
+  <button class="tab" onclick="switchTab('settings')">設定</button>
+</div>
+
+<!-- 寫日記 -->
+<div class="panel active" id="panel-write">
+  <div class="date-label">今天</div>
+  <div class="date-display" id="today-display"></div>
+  <textarea id="content" placeholder="今天發生了什麼..." rows="8"></textarea>
+  <div class="tag-input-wrap" id="tag-wrap">
+    <span id="tag-pills"></span>
+    <input type="text" id="tag-input" placeholder="新增 tag（按 Enter）">
+  </div>
+  <div class="tag-hint">按 Enter 新增 tag</div>
+  <button class="btn-save" id="btn-save" onclick="saveEntry()">儲存日記</button>
+  <div class="status" id="save-status"></div>
+</div>
+
+<!-- 閱讀 -->
+<div class="panel" id="panel-read">
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="搜尋內容或 tag..." onkeydown="if(event.key==='Enter')searchEntries()">
+    <button class="btn-search" onclick="searchEntries()">搜尋</button>
+  </div>
+  <div id="entries-list"><div class="empty">請先在設定中填入 GitHub 資訊</div></div>
+</div>
+
+<!-- 設定 -->
+<div class="panel" id="panel-settings">
+  <p class="settings-note">填入你的 GitHub 資訊，日記將儲存在你的 private repo 中。這些資訊只存在你的手機瀏覽器裡。</p>
+  <div class="settings-group">
+    <div class="settings-row full">
+      <div>
+        <div class="settings-label">GitHub Username</div>
+      </div>
+      <input type="text" id="s-username" placeholder="例如：ff9700hcckkb">
+    </div>
+    <div class="settings-row full">
+      <div>
+        <div class="settings-label">Personal Access Token</div>
+        <div class="settings-sub">ghp_ 開頭的那串</div>
+      </div>
+      <input type="password" id="s-token" placeholder="ghp_...">
+    </div>
+    <div class="settings-row full">
+      <div>
+        <div class="settings-label">日記 Repo 名稱</div>
+        <div class="settings-sub">存放日記內容的 private repo</div>
+      </div>
+      <input type="text" id="s-repo" placeholder="my-diary-data">
+    </div>
+  </div>
+  <button class="btn-save-settings" onclick="saveSettings()">儲存設定</button>
+  <div class="status" id="settings-status"></div>
+</div>
+
+<script>
+const TODAY = new Date();
+const PAD = n => String(n).padStart(2,'0');
+const TODAY_STR = `${TODAY.getFullYear()}-${PAD(TODAY.getMonth()+1)}-${PAD(TODAY.getDate())}`;
+const TODAY_DISPLAY = `${TODAY.getFullYear()} / ${PAD(TODAY.getMonth()+1)} / ${PAD(TODAY.getDate())}`;
+
+document.getElementById('today-display').textContent = TODAY_DISPLAY;
+document.getElementById('header-date').textContent = TODAY_STR;
+
+let tags = [];
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['write','read','settings'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'read') loadEntries();
+}
+
+// Tag input
+document.getElementById('tag-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(/\s+/g, '');
+    if (val && !tags.includes(val)) {
+      tags.push(val);
+      renderTagPills();
+    }
+    e.target.value = '';
+  }
+});
+
+function renderTagPills() {
+  const container = document.getElementById('tag-pills');
+  container.innerHTML = tags.map((t,i) =>
+    `<span class="tag-pill">#${t}<button onclick="removeTag(${i})">×</button></span>`
+  ).join('');
+}
+
+function removeTag(i) {
+  tags.splice(i, 1);
+  renderTagPills();
+}
+
+// Settings
+function getConfig() {
+  return {
+    username: localStorage.getItem('gh_username') || '',
+    token: localStorage.getItem('gh_token') || '',
+    repo: localStorage.getItem('gh_repo') || 'my-diary-data',
+  };
+}
+
+function saveSettings() {
+  const u = document.getElementById('s-username').value.trim();
+  const t = document.getElementById('s-token').value.trim();
+  const r = document.getElementById('s-repo').value.trim();
+  if (!u || !t || !r) {
+    showStatus('settings-status', '請填入所有欄位', 'error');
+    return;
+  }
+  localStorage.setItem('gh_username', u);
+  localStorage.setItem('gh_token', t);
+  localStorage.setItem('gh_repo', r);
+  showStatus('settings-status', '設定已儲存 ✓', 'success');
+}
+
+window.addEventListener('load', () => {
+  const c = getConfig();
+  if (c.username) document.getElementById('s-username').value = c.username;
+  if (c.token) document.getElementById('s-token').value = c.token;
+  if (c.repo) document.getElementById('s-repo').value = c.repo;
+});
+
+// GitHub API
+async function ghRequest(method, path, body) {
+  const c = getConfig();
+  const res = await fetch(`https://api.github.com/repos/${c.username}/${c.repo}${path}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${c.token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || '請求失敗');
+  return data;
+}
+
+// Save entry as GitHub Issue
+async function saveEntry() {
+  const c = getConfig();
+  if (!c.username || !c.token) {
+    showStatus('save-status', '請先到設定填入 GitHub 資訊', 'error');
+    switchTab('settings');
+    return;
+  }
+  const content = document.getElementById('content').value.trim();
+  if (!content) {
+    showStatus('save-status', '請輸入日記內容', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = '儲存中...';
+  showStatus('save-status', '', '');
+
+  try {
+    const labels = ['diary', ...tags];
+    // Ensure labels exist
+    for (const label of tags) {
+      try {
+        await ghRequest('POST', '/labels', { name: label, color: '2d6a4f' });
+      } catch(e) { /* label may already exist */ }
+    }
+
+    await ghRequest('POST', '/issues', {
+      title: TODAY_STR,
+      body: content,
+      labels,
+    });
+
+    showStatus('save-status', '儲存成功 ✓', 'success');
+    document.getElementById('content').value = '';
+    tags = [];
+    renderTagPills();
+  } catch(e) {
+    showStatus('save-status', '儲存失敗：' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '儲存日記';
+  }
+}
+
+// Load & search entries
+async function loadEntries(query='') {
+  const c = getConfig();
+  if (!c.username || !c.token) {
+    document.getElementById('entries-list').innerHTML = '<div class="empty">請先在設定中填入 GitHub 資訊</div>';
+    return;
+  }
+
+  document.getElementById('entries-list').innerHTML = '<div class="loading">載入中...</div>';
+
+  try {
+    let q = `repo:${c.username}/${c.repo} is:issue label:diary`;
+    if (query) q += ` ${query}`;
+    const data = await fetch(
+      `https://api.github.com/search/issues?q=${encodeURIComponent(q)}&sort=created&order=desc&per_page=30`,
+      { headers: { 'Authorization': `Bearer ${c.token}`, 'Accept': 'application/vnd.github+json' } }
+    ).then(r => r.json());
+
+    const items = data.items || [];
+    if (!items.length) {
+      document.getElementById('entries-list').innerHTML = '<div class="empty">沒有找到日記</div>';
+      return;
+    }
+
+    document.getElementById('entries-list').innerHTML = items.map(issue => {
+      const entryTags = (issue.labels || [])
+        .filter(l => l.name !== 'diary')
+        .map(l => `<span class="entry-tag">#${l.name}</span>`)
+        .join('');
+      return `
+        <div class="entry-card">
+          <div class="entry-date">${issue.title}</div>
+          <div class="entry-body">${escapeHtml(issue.body || '')}</div>
+          ${entryTags ? `<div class="entry-tags">${entryTags}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    document.getElementById('entries-list').innerHTML = `<div class="empty">載入失敗：${e.message}</div>`;
+  }
+}
+
+function searchEntries() {
+  const q = document.getElementById('search-input').value.trim();
+  loadEntries(q);
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status ' + type;
+}
+</script>
+</body>
+</html>
