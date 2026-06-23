@@ -238,24 +238,55 @@
     border-radius: 12px;
     padding: 1rem 1.125rem;
     margin-bottom: 0.875rem;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .entry-card:active { border-color: var(--accent); }
+
+  .entry-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
   }
 
   .entry-date {
     font-size: 13px;
     color: var(--text-muted);
-    margin-bottom: 0.4rem;
     font-weight: 500;
   }
 
-  .entry-body {
+  .entry-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-icon {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 3px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+
+  .btn-icon:active { background: var(--bg); }
+  .btn-icon.danger { color: var(--danger); border-color: #f5c6c6; }
+  .btn-icon.danger:active { background: #fef0f0; }
+
+  .entry-preview {
     font-size: 15px;
-    line-height: 1.65;
-    white-space: pre-wrap;
-    word-break: break-word;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .entry-tags {
-    margin-top: 0.75rem;
+    margin-top: 0.6rem;
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
@@ -274,6 +305,148 @@
     color: var(--text-muted);
     font-size: 15px;
     padding: 3rem 0;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 1.25rem;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .btn-close {
+    background: var(--bg);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.7;
+    color: var(--text);
+    background: var(--bg);
+    resize: none;
+    min-height: 200px;
+    outline: none;
+  }
+
+  .modal textarea:focus { border-color: var(--accent); }
+
+  .modal-tag-wrap {
+    margin-top: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.5rem 0.875rem;
+    flex-wrap: wrap;
+  }
+
+  .modal-tag-wrap:focus-within { border-color: var(--accent); }
+
+  .modal-tag-wrap input {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: transparent;
+    min-width: 80px;
+    flex: 1;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 1rem;
+  }
+
+  .btn-modal-save {
+    flex: 1;
+    padding: 0.8rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-modal-save:disabled { opacity: 0.5; }
+
+  .confirm-msg {
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+  }
+
+  .btn-modal-danger {
+    flex: 1;
+    padding: 0.8rem;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-modal-cancel {
+    flex: 1;
+    padding: 0.8rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
   }
 
   /* Settings panel */
@@ -419,6 +592,43 @@
   </div>
   <button class="btn-save-settings" onclick="saveSettings()">儲存設定</button>
   <div class="status" id="settings-status"></div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="edit-modal-title"></div>
+      <button class="btn-close" onclick="closeModal('edit-modal')">×</button>
+    </div>
+    <textarea id="edit-content" rows="8"></textarea>
+    <div class="modal-tag-wrap" id="edit-tag-wrap">
+      <span id="edit-tag-pills"></span>
+      <input type="text" id="edit-tag-input" placeholder="新增 tag（按 Enter）">
+    </div>
+    <div class="tag-hint" style="margin-top:0.4rem;">按 Enter 新增 tag</div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal('edit-modal')">取消</button>
+      <button class="btn-modal-save" id="btn-edit-save" onclick="submitEdit()">儲存</button>
+    </div>
+    <div class="status" id="edit-status"></div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">刪除日記</div>
+      <button class="btn-close" onclick="closeModal('delete-modal')">×</button>
+    </div>
+    <p class="confirm-msg">確定要刪除 <strong id="delete-date-label"></strong> 的日記嗎？此操作無法復原。</p>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal('delete-modal')">取消</button>
+      <button class="btn-modal-danger" id="btn-delete-confirm" onclick="submitDelete()">刪除</button>
+    </div>
+    <div class="status" id="delete-status"></div>
+  </div>
 </div>
 
 <script>
@@ -589,10 +799,19 @@ async function loadEntries(query='') {
         .filter(l => l.name !== 'diary')
         .map(l => `<span class="entry-tag">#${l.name}</span>`)
         .join('');
+      const firstLine = (issue.body || '').split('\n')[0];
+      const tagNames = (issue.labels || []).filter(l => l.name !== 'diary').map(l => l.name);
+      const dataAttr = `data-id="${issue.number}" data-title="${escapeHtml(issue.title)}" data-body="${escapeAttr(issue.body||'')}" data-tags="${escapeAttr(tagNames.join(','))}"`;
       return `
-        <div class="entry-card">
-          <div class="entry-date">${issue.title}</div>
-          <div class="entry-body">${escapeHtml(issue.body || '')}</div>
+        <div class="entry-card" ${dataAttr}>
+          <div class="entry-card-header">
+            <div class="entry-date">${issue.title}</div>
+            <div class="entry-actions">
+              <button class="btn-icon" onclick="openEdit(event,this.closest('.entry-card'))">編輯</button>
+              <button class="btn-icon danger" onclick="openDelete(event,this.closest('.entry-card'))">刪除</button>
+            </div>
+          </div>
+          <div class="entry-preview">${escapeHtml(firstLine)}</div>
           ${entryTags ? `<div class="entry-tags">${entryTags}</div>` : ''}
         </div>
       `;
@@ -611,10 +830,101 @@ function escapeHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function escapeAttr(s) {
+  return s.replace(/"/g,'&quot;').replace(/\n/g,'\\n');
+}
+
 function showStatus(id, msg, type) {
   const el = document.getElementById(id);
   el.textContent = msg;
   el.className = 'status ' + type;
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Edit
+let editingId = null;
+let editTags = [];
+
+function openEdit(e, card) {
+  e.stopPropagation();
+  editingId = card.dataset.id;
+  const body = card.dataset.body.replace(/\\n/g, '\n');
+  const tagStr = card.dataset.tags;
+  editTags = tagStr ? tagStr.split(',').filter(Boolean) : [];
+
+  document.getElementById('edit-modal-title').textContent = card.dataset.title;
+  document.getElementById('edit-content').value = body;
+  renderEditTagPills();
+  showStatus('edit-status', '', '');
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function renderEditTagPills() {
+  document.getElementById('edit-tag-pills').innerHTML = editTags.map((t,i) =>
+    `<span class="tag-pill">#${t}<button onclick="removeEditTag(${i})">×</button></span>`
+  ).join('');
+}
+
+function removeEditTag(i) {
+  editTags.splice(i, 1);
+  renderEditTagPills();
+}
+
+document.getElementById('edit-tag-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(/\s+/g,'');
+    if (val && !editTags.includes(val)) { editTags.push(val); renderEditTagPills(); }
+    e.target.value = '';
+  }
+});
+
+async function submitEdit() {
+  const content = document.getElementById('edit-content').value.trim();
+  if (!content) { showStatus('edit-status','請輸入內容','error'); return; }
+  const btn = document.getElementById('btn-edit-save');
+  btn.disabled = true; btn.textContent = '儲存中...';
+  try {
+    const labels = ['diary', ...editTags];
+    for (const label of editTags) {
+      try { await ghRequest('POST','/labels',{name:label,color:'2d6a4f'}); } catch(e){}
+    }
+    await ghRequest('PATCH', `/issues/${editingId}`, { body: content, labels });
+    showStatus('edit-status', '已儲存 ✓', 'success');
+    setTimeout(() => { closeModal('edit-modal'); loadEntries(document.getElementById('search-input').value.trim()); }, 800);
+  } catch(e) {
+    showStatus('edit-status', '失敗：' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '儲存';
+  }
+}
+
+// Delete
+let deletingId = null;
+
+function openDelete(e, card) {
+  e.stopPropagation();
+  deletingId = card.dataset.id;
+  document.getElementById('delete-date-label').textContent = card.dataset.title;
+  showStatus('delete-status', '', '');
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+async function submitDelete() {
+  const btn = document.getElementById('btn-delete-confirm');
+  btn.disabled = true; btn.textContent = '刪除中...';
+  try {
+    await ghRequest('PATCH', `/issues/${deletingId}`, { state: 'closed' });
+    closeModal('delete-modal');
+    loadEntries(document.getElementById('search-input').value.trim());
+  } catch(e) {
+    showStatus('delete-status', '失敗：' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '刪除';
+  }
 }
 </script>
 </body>
