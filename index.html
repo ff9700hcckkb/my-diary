@@ -244,6 +244,25 @@
 
   .entry-card:active { border-color: var(--accent); }
 
+  .entry-chevron {
+    font-size: 18px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+    line-height: 1;
+  }
+
+  .entry-divider {
+    border-top: 1px solid var(--border);
+    margin: 0.75rem 0;
+  }
+
+  .entry-body {
+    font-size: 15px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
   .entry-card-header {
     display: flex;
     align-items: center;
@@ -260,6 +279,7 @@
   .entry-actions {
     display: flex;
     gap: 6px;
+    margin-top: 0.875rem;
   }
 
   .btn-icon {
@@ -803,16 +823,21 @@ async function loadEntries(query='') {
       const tagNames = (issue.labels || []).filter(l => l.name !== 'diary').map(l => l.name);
       const dataAttr = `data-id="${issue.number}" data-title="${escapeHtml(issue.title)}" data-body="${escapeAttr(issue.body||'')}" data-tags="${escapeAttr(tagNames.join(','))}"`;
       return `
-        <div class="entry-card" ${dataAttr}>
+        <div class="entry-card" ${dataAttr} onclick="toggleEntry(this)">
           <div class="entry-card-header">
             <div class="entry-date">${issue.title}</div>
+            <span class="entry-chevron">›</span>
+          </div>
+          <div class="entry-preview">${escapeHtml(firstLine)}</div>
+          <div class="entry-expanded" style="display:none;">
+            <div class="entry-divider"></div>
+            <div class="entry-body">${escapeHtml(issue.body || '')}</div>
+            ${entryTags ? `<div class="entry-tags">${entryTags}</div>` : ''}
             <div class="entry-actions">
               <button class="btn-icon" onclick="openEdit(event,this.closest('.entry-card'))">編輯</button>
               <button class="btn-icon danger" onclick="openDelete(event,this.closest('.entry-card'))">刪除</button>
             </div>
           </div>
-          <div class="entry-preview">${escapeHtml(firstLine)}</div>
-          ${entryTags ? `<div class="entry-tags">${entryTags}</div>` : ''}
         </div>
       `;
     }).join('');
@@ -824,6 +849,16 @@ async function loadEntries(query='') {
 function searchEntries() {
   const q = document.getElementById('search-input').value.trim();
   loadEntries(q);
+}
+
+function toggleEntry(card) {
+  const expanded = card.querySelector('.entry-expanded');
+  const chevron = card.querySelector('.entry-chevron');
+  const preview = card.querySelector('.entry-preview');
+  const isOpen = expanded.style.display !== 'none';
+  expanded.style.display = isOpen ? 'none' : 'block';
+  preview.style.display = isOpen ? '' : 'none';
+  chevron.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
 function escapeHtml(s) {
