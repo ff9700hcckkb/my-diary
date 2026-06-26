@@ -95,23 +95,89 @@
     color: var(--text);
   }
 
-  textarea {
-    width: 100%;
+  .editor-wrap {
     border: 1px solid var(--border);
     border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: border-color 0.15s;
+  }
+
+  .editor-wrap:focus-within { border-color: var(--accent); }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    align-items: center;
+  }
+
+  .tb-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text);
+    transition: all 0.12s;
+    line-height: 1.2;
+  }
+
+  .tb-btn:active, .tb-btn.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tb-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+
+  .tb-select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    cursor: pointer;
+    outline: none;
+  }
+
+  .tb-color {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    padding: 2px;
+    cursor: pointer;
+    background: none;
+  }
+
+  .editor-body {
+    min-height: 200px;
     padding: 0.875rem 1rem;
     font-size: 15px;
     font-family: inherit;
     line-height: 1.7;
     color: var(--text);
-    background: var(--surface);
-    resize: none;
-    min-height: 200px;
     outline: none;
-    transition: border-color 0.15s;
+    word-break: break-word;
   }
 
-  textarea:focus { border-color: var(--accent); }
+  .editor-body:empty:before {
+    content: attr(data-placeholder);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
 
   .tag-input-wrap {
     margin-top: 1rem;
@@ -566,7 +632,25 @@
 <div class="panel active" id="panel-write">
   <div class="date-label">今天</div>
   <div class="date-display" id="today-display"></div>
-  <textarea id="content" placeholder="今天發生了什麼..." rows="8"></textarea>
+  <div class="editor-wrap">
+    <div class="toolbar">
+      <button class="tb-btn" title="粗體" onmousedown="e(event,'bold')"><b>B</b></button>
+      <button class="tb-btn" title="斜體" onmousedown="e(event,'italic')"><i>I</i></button>
+      <button class="tb-btn" title="底線" onmousedown="e(event,'underline')"><u>U</u></button>
+      <div class="tb-sep"></div>
+      <select class="tb-select" title="字體大小" onchange="eSize(this)">
+        <option value="">大小</option>
+        <option value="1">小</option>
+        <option value="3">中</option>
+        <option value="5">大</option>
+        <option value="7">特大</option>
+      </select>
+      <div class="tb-sep"></div>
+      <input class="tb-color" type="color" title="文字顏色" onchange="eColor(this)" value="#1a1a18">
+      <button class="tb-btn" title="移除格式" onmousedown="e(event,'removeFormat')" style="font-size:12px;">✕格式</button>
+    </div>
+    <div class="editor-body" id="editor" contenteditable="true" data-placeholder="今天發生了什麼..."></div>
+  </div>
   <div class="tag-input-wrap" id="tag-wrap">
     <span id="tag-pills"></span>
     <input type="text" id="tag-input" placeholder="新增 tag（按 Enter）">
@@ -621,7 +705,25 @@
       <div class="modal-title" id="edit-modal-title"></div>
       <button class="btn-close" onclick="closeModal('edit-modal')">×</button>
     </div>
-    <textarea id="edit-content" rows="8"></textarea>
+    <div class="editor-wrap">
+      <div class="toolbar">
+        <button class="tb-btn" title="粗體" onmousedown="e(event,'bold')"><b>B</b></button>
+        <button class="tb-btn" title="斜體" onmousedown="e(event,'italic')"><i>I</i></button>
+        <button class="tb-btn" title="底線" onmousedown="e(event,'underline')"><u>U</u></button>
+        <div class="tb-sep"></div>
+        <select class="tb-select" title="字體大小" onchange="eSize(this)">
+          <option value="">大小</option>
+          <option value="1">小</option>
+          <option value="3">中</option>
+          <option value="5">大</option>
+          <option value="7">特大</option>
+        </select>
+        <div class="tb-sep"></div>
+        <input class="tb-color" type="color" title="文字顏色" onchange="eColor(this)" value="#1a1a18">
+        <button class="tb-btn" title="移除格式" onmousedown="e(event,'removeFormat')" style="font-size:12px;">✕格式</button>
+      </div>
+      <div class="editor-body" id="edit-content" contenteditable="true" data-placeholder="日記內容..."></div>
+    </div>
     <div class="modal-tag-wrap" id="edit-tag-wrap">
       <span id="edit-tag-pills"></span>
       <input type="text" id="edit-tag-input" placeholder="新增 tag（按 Enter）">
@@ -670,6 +772,25 @@ function switchTab(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'read') loadEntries();
+}
+
+// Toolbar functions
+function e(event, cmd) {
+  event.preventDefault();
+  document.execCommand(cmd, false, null);
+  document.getElementById('editor').focus();
+}
+
+function eSize(sel) {
+  if (!sel.value) return;
+  document.execCommand('fontSize', false, sel.value);
+  sel.value = '';
+  document.getElementById('editor').focus();
+}
+
+function eColor(input) {
+  document.execCommand('foreColor', false, input.value);
+  document.getElementById('editor').focus();
 }
 
 // Tag input
@@ -752,8 +873,9 @@ async function saveEntry() {
     switchTab('settings');
     return;
   }
-  const content = document.getElementById('content').value.trim();
-  if (!content) {
+  const editor = document.getElementById('editor');
+  const content = editor.innerHTML.trim();
+  if (!content || editor.innerText.trim() === '') {
     showStatus('save-status', '請輸入日記內容', 'error');
     return;
   }
@@ -779,7 +901,7 @@ async function saveEntry() {
     });
 
     showStatus('save-status', '儲存成功 ✓', 'success');
-    document.getElementById('content').value = '';
+    document.getElementById('editor').innerHTML = '';
     tags = [];
     renderTagPills();
   } catch(e) {
@@ -831,7 +953,7 @@ async function loadEntries(query='') {
           <div class="entry-preview">${escapeHtml(firstLine)}</div>
           <div class="entry-expanded" style="display:none;">
             <div class="entry-divider"></div>
-            <div class="entry-body">${escapeHtml(issue.body || '')}</div>
+            <div class="entry-body">${issue.body || ''}</div>
             ${entryTags ? `<div class="entry-tags">${entryTags}</div>` : ''}
             <div class="entry-actions">
               <button class="btn-icon" onclick="openEdit(event,this.closest('.entry-card'))">編輯</button>
@@ -891,7 +1013,7 @@ function openEdit(e, card) {
   editTags = tagStr ? tagStr.split(',').filter(Boolean) : [];
 
   document.getElementById('edit-modal-title').textContent = card.dataset.title;
-  document.getElementById('edit-content').value = body;
+  document.getElementById('edit-content').innerHTML = body;
   renderEditTagPills();
   showStatus('edit-status', '', '');
   document.getElementById('edit-modal').classList.add('open');
@@ -918,8 +1040,9 @@ document.getElementById('edit-tag-input').addEventListener('keydown', e => {
 });
 
 async function submitEdit() {
-  const content = document.getElementById('edit-content').value.trim();
-  if (!content) { showStatus('edit-status','請輸入內容','error'); return; }
+  const editEl = document.getElementById('edit-content');
+  const content = editEl.innerHTML.trim();
+  if (!content || editEl.innerText.trim() === '') { showStatus('edit-status','請輸入內容','error'); return; }
   const btn = document.getElementById('btn-edit-save');
   btn.disabled = true; btn.textContent = '儲存中...';
   try {
