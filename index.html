@@ -941,7 +941,9 @@ async function loadEntries(query='') {
         .filter(l => l.name !== 'diary')
         .map(l => `<span class="entry-tag">#${l.name}</span>`)
         .join('');
-      const firstLine = (issue.body || '').split('\n')[0];
+      const _tmp = document.createElement('div');
+      _tmp.innerHTML = issue.body || '';
+      const firstLine = (_tmp.innerText || '').split('\n').find(l => l.trim()) || '';
       const tagNames = (issue.labels || []).filter(l => l.name !== 'diary').map(l => l.name);
       const dataAttr = `data-id="${issue.number}" data-title="${escapeHtml(issue.title)}" data-body="${escapeAttr(issue.body||'')}" data-tags="${escapeAttr(tagNames.join(','))}"`;
       return `
@@ -950,7 +952,7 @@ async function loadEntries(query='') {
             <div class="entry-date">${issue.title}</div>
             <span class="entry-chevron">›</span>
           </div>
-          <div class="entry-preview">${escapeHtml(firstLine)}</div>
+          <div class="entry-preview">${escapeHtml(firstLine.trim())}</div>
           <div class="entry-expanded" style="display:none;">
             <div class="entry-divider"></div>
             <div class="entry-body">${issue.body || ''}</div>
